@@ -48,6 +48,11 @@ module ActiveRecord
 
       def adapter_name_from(model) # :nodoc:
         model.connection_db_config.adapter.to_sym
+      rescue ConnectionNotEstablished, ConnectionNotDefined
+        env = ConnectionHandling::DEFAULT_ENV.call.to_s
+        if (db_config = model.configurations.configs_for(env_name: env).first)
+          db_config.adapter.to_sym
+        end
       end
 
       private
