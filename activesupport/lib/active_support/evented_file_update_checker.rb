@@ -5,6 +5,7 @@ require "listen"
 
 require "pathname"
 require "concurrent/atomic/atomic_boolean"
+require "weakref"
 
 module ActiveSupport
   # Allows you to "listen" to changes in a file system.
@@ -91,8 +92,12 @@ module ActiveSupport
         # inotify / FSEvents file descriptors are inherited on fork, so
         # we need to reopen them otherwise only the parent or the child
         # will be notified.
-        # FIXME: this callback is keeping a reference on the instance
-        @after_fork = ActiveSupport::ForkTracker.after_fork { start }
+        # Use a weak reference so the callback doesn't keep the instance alive,
+        # but still restarts listeners after a fork.
+        weak_self = WeakRef.new(self)
+        @after_fork = ActiveSupport::ForkTracker.after_fork do
+          weak_self.__getobj__.start if weak_self.weakref_alive?
+        end
       end
 
       def finalizer

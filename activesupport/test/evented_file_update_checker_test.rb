@@ -117,6 +117,29 @@ class EventedFileUpdateCheckerTest < ActiveSupport::TestCase
     assert_empty Thread.list & listener_threads
   end
 
+  test "can be garbage collected after fork" do
+    skip "Forking not available" unless Process.respond_to?(:fork)
+
+    checker_ref, listener_threads = Thread.new do
+      threads_before_checker = Thread.list
+      checker = ActiveSupport::EventedFileUpdateChecker.new([], tmpdir => ".rb") { }
+
+      # Wait for listener thread to start processing events.
+      wait
+
+      pid = fork { exit! }
+      Process.wait(pid)
+
+      [WeakRef.new(checker), Thread.list - threads_before_checker]
+    end.value
+
+    GC.start
+    listener_threads.each { |t| t.join(1) }
+
+    assert_not checker_ref.weakref_alive?, "EventedFileUpdateChecker was not garbage collected"
+    assert_empty Thread.list & listener_threads
+  end
+
   test "should detect changes through symlink" do
     actual_dir = File.join(tmpdir, "actual")
     linked_dir = File.join(tmpdir, "linked")
