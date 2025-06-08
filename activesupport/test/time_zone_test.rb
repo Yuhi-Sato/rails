@@ -781,6 +781,12 @@ class TimeZoneTest < ActiveSupport::TestCase
     assert zone !~ /Nonexistent_Place/
   end
 
+  def test_zone_match_with_string
+    zone = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
+    assert zone =~ "Eastern"
+    assert zone !~ "Nonexistent_Place"
+  end
+
   def test_zone_match?
     zone = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     assert zone.match?(/Eastern/)

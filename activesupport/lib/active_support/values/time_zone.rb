@@ -341,7 +341,8 @@ module ActiveSupport
     # Compare #name and TZInfo identifier to a supplied regexp, returning +true+
     # if a match is found.
     def =~(re)
-      re === name || re === MAPPING[name]
+      regexp = Regexp === re ? re : /#{Regexp.escape(re.to_s)}/
+      regexp =~ name || regexp =~ MAPPING[name]
     end
 
     # Compare #name and TZInfo identifier to a supplied regexp, returning +true+
