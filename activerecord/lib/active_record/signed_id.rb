@@ -89,7 +89,11 @@ module ActiveRecord
       def find_signed!(signed_id, purpose: nil, on_rotation: nil)
         options = { on_rotation: on_rotation }.compact
         if id = signed_id_verifier.verify(signed_id, purpose: combine_signed_id_purposes(purpose), **options)
-          find(id)
+          begin
+            find(id)
+          rescue ActiveRecord::StatementTimeout
+            raise RecordNotFound.new("Couldn't find #{name} with '#{primary_key}'=#{id}", name, primary_key, id)
+          end
         end
       end
 
