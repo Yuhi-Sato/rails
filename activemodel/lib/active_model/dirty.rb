@@ -252,12 +252,15 @@ module ActiveModel
 
     def init_attributes(other) # :nodoc:
       attrs = super
+
       if self.class.respond_to?(:_default_attributes)
-        self.class._default_attributes.map do |attr|
+        attrs = self.class._default_attributes.map do |attr|
           attr.with_value_from_user(attrs.fetch_value(attr.name))
         end
-      else
-        attrs
+      end
+
+      attrs.map do |attr|
+        other.attribute_changed?(attr.name) ? attr : attr.forgetting_assignment
       end
     end
 

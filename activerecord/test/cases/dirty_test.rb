@@ -423,6 +423,20 @@ class DirtyTest < ActiveRecord::TestCase
     assert_not_predicate pirate_dup, :catchphrase_changed?
   end
 
+  def test_dup_preserves_attribute_changed_state
+    parrot = Parrot.create!(name: "Polly")
+    pirate = Pirate.create!(catchphrase: "shiver me timbers", parrot: parrot)
+    pirate.catchphrase = "Arr!"
+
+    assert_predicate pirate, :catchphrase_changed?
+    assert_not_predicate pirate, :parrot_id_changed?
+
+    pirate_dup = pirate.dup
+
+    assert_predicate pirate_dup, :catchphrase_changed?
+    assert_not_predicate pirate_dup, :parrot_id_changed?
+  end
+
   def test_reverted_changes_are_not_dirty
     phrase = "shiver me timbers"
     pirate = Pirate.create!(catchphrase: phrase)
