@@ -367,6 +367,10 @@ module ActiveRecord
           if values.any?(&:blank?)
             raise ArgumentError, "Enum values #{values} must not contain a blank name."
           end
+
+          if values.map(&:to_s).uniq.length != values.length
+            raise ArgumentError, "Enum values #{values} must not contain duplicate names."
+          end
         else
           raise ArgumentError, "Enum values #{values} must be either a non-empty hash or an array."
         end
