@@ -662,7 +662,7 @@ module ActiveRecord
 
     # Allows sort on objects
     def <=>(other_object)
-      if other_object.is_a?(self.class)
+      if other_object.is_a?(self.class) || is_a?(other_object.class)
         to_key <=> other_object.to_key
       else
         super

@@ -703,6 +703,16 @@ class BasicsTest < ActiveRecord::TestCase
     end
   end
 
+  def test_comparison_with_inherited_objects_in_array
+    subclass = Class.new(Topic) { self.table_name = "topics" }
+    topic = Topic.create
+    inherited = subclass.create(id: topic.id)
+
+    assert_nothing_raised do
+      [inherited, topic].sort
+    end
+  end
+
   def test_readonly_attributes
     assert_equal [ "title" ], ReadonlyTitlePost.readonly_attributes
 
