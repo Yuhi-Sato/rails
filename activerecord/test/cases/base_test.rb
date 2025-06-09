@@ -1176,15 +1176,16 @@ class BasicsTest < ActiveRecord::TestCase
       end
     end
 
-    def test_mutating_time_objects
-      with_env_tz do
-        with_timezone_config default: :local do
-          assert_equal Time.local(2004, 1, 1, 0, 0, 0, 0), Default.new.fixed_time
-          assert_equal Time.utc(2004, 1, 1, 5, 0, 0, 0), Default.new.fixed_time.utc
-          assert_equal Time.local(2004, 1, 1, 0, 0, 0, 0), Default.new.fixed_time
-        end
+  def test_mutating_time_objects
+    with_env_tz do
+      skip "US/Eastern timezone data not available" if Time.local(2004, 1, 1, 0, 0, 0, 0).utc_offset.zero?
+      with_timezone_config default: :local do
+        assert_equal Time.local(2004, 1, 1, 0, 0, 0, 0), Default.new.fixed_time
+        assert_equal Time.utc(2004, 1, 1, 5, 0, 0, 0), Default.new.fixed_time.utc
+        assert_equal Time.local(2004, 1, 1, 0, 0, 0, 0), Default.new.fixed_time
       end
     end
+  end
 
     unless in_memory_db?
       def test_connection_in_local_time
