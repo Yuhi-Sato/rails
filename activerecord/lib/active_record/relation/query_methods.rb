@@ -126,10 +126,16 @@ module ActiveRecord
           reflection = scope_association_reflection(association)
           @scope.left_outer_joins!(association)
           association_conditions = Array(reflection.association_primary_key).index_with(nil)
+          table_name = if reflection.table_name == @scope.table_name
+            reflection.alias_candidate(@scope.table_name)
+          else
+            reflection.table_name
+          end
+
           if reflection.options[:class_name]
             @scope.where!(association => association_conditions)
           else
-            @scope.where!(reflection.table_name => association_conditions)
+            @scope.where!(table_name => association_conditions)
           end
         end
 

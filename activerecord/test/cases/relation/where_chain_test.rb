@@ -9,6 +9,8 @@ require "models/comment"
 require "models/categorization"
 require "models/book"
 require "models/cpk"
+require "models/person"
+require "models/friendship"
 
 module ActiveRecord
   class WhereChainTest < ActiveRecord::TestCase
@@ -144,6 +146,11 @@ module ActiveRecord
     def test_missing_with_multiple_association
       assert_predicate posts(:authorless).comments, :empty?
       assert_equal [posts(:authorless)], Post.where.missing(:author, :comments).to_a
+    end
+
+    def test_missing_with_self_referential_through_association
+      person = Person.create!(first_name: "Solo")
+      assert_includes Person.where.missing(:followers), person
     end
 
     def test_missing_merged_with_scope_on_association
