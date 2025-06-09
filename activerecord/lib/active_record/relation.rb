@@ -987,7 +987,10 @@ module ActiveRecord
     #   Person.where(name: 'David').touch_all
     #   # => "UPDATE \"people\" SET \"updated_at\" = '2018-01-04 22:55:23.132670' WHERE \"people\".\"name\" = 'David'"
     def touch_all(*names, time: nil)
-      update_all model.touch_attributes_with_time(*names, time: time)
+      touch_updates = model.touch_attributes_with_time(*names, time: time)
+      return 0 if touch_updates.empty?
+
+      update_all touch_updates
     end
 
     # Destroys the records by instantiating each

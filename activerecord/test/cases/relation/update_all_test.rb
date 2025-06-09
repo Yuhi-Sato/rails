@@ -304,6 +304,12 @@ class UpdateAllTest < ActiveRecord::TestCase
     assert_equal new_time, developer.updated_at
   end
 
+  def test_touch_all_on_model_without_timestamps_is_noop
+    assert_nothing_raised do
+      assert_equal 0, Recipe.touch_all
+    end
+  end
+
   def test_update_on_relation
     topic1 = TopicWithCallbacks.create! title: "arel", author_name: nil
     topic2 = TopicWithCallbacks.create! title: "activerecord", author_name: nil
