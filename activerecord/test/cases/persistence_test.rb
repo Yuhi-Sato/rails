@@ -1705,4 +1705,16 @@ class QueryConstraintsTest < ActiveRecord::TestCase
   def test_child_class_with_query_constraints_overrides_parents
     assert_equal(["clothing_type", "color", "size"], ClothingItem::Sized.query_constraints_list)
   end
+
+  def test_destroy_is_idempotent
+    developer = Developer.create!(name: "Destroy Me", salary: 1)
+
+    assert_difference("Developer.count", -1) do
+      developer.destroy
+    end
+
+    assert_no_difference("Developer.count") do
+      developer.destroy
+    end
+  end
 end
