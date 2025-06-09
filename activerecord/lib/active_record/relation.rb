@@ -494,7 +494,7 @@ module ActiveRecord
           column = c.visitor.compile(table[timestamp_column])
           select_values = "COUNT(*) AS #{model.adapter_class.quote_column_name("size")}, MAX(%s) AS timestamp"
 
-          if collection.has_limit_or_offset?
+          if collection.has_limit_or_offset? || collection.group_values.any?
             query = collection.select("#{column} AS collection_cache_key_timestamp")
             query._select!(table[Arel.star]) if distinct_value && collection.select_values.empty?
             subquery_alias = "subquery_for_cache_key"

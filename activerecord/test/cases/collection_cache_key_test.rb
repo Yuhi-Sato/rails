@@ -291,6 +291,22 @@ module ActiveRecord
       end
     end
 
+    test "cache_key changes when grouped relation updates a non first record" do
+      Developer.delete_all
+      Developer.create!(name: "first")
+      second = Developer.create!(name: "second")
+      Developer.create!(name: "third")
+
+      cache_key = Developer.group(:id).cache_key
+
+      travel 1.second
+      second.touch
+
+      new_key = Developer.group(:id).cache_key
+
+      assert_not_equal cache_key, new_key
+    end
+
     def with_collection_cache_versioning(value = true)
       @old_collection_cache_versioning = ActiveRecord::Base.collection_cache_versioning
       ActiveRecord::Base.collection_cache_versioning = value
