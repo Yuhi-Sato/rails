@@ -99,6 +99,9 @@ module ActiveStorage
     end
 
     def path_for(key) # :nodoc:
+      if key.include?("..") || key.start_with?("/") || key.start_with?("\\")
+        raise ArgumentError, "invalid key"
+      end
       File.join root, folder_for(key), key
     end
 

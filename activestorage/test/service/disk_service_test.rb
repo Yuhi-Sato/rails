@@ -78,4 +78,10 @@ class ActiveStorage::Service::DiskServiceTest < ActiveSupport::TestCase
   ensure
     @service.root = tmp_config.dig(:tmp, :root)
   end
+
+  test "path_for rejects traversal" do
+    assert_raises ArgumentError do
+      @service.send(:path_for, "../evil")
+    end
+  end
 end
