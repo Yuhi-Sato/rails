@@ -427,6 +427,14 @@ class TrilogyAdapterTest < ActiveRecord::TrilogyTestCase
     end
   end
 
+  test "SSLError raises ActiveRecord::ConnectionFailed" do
+    assert_raises(ActiveRecord::ConnectionFailed) do
+      @conn.raw_connection.stub(:query, -> (*) { raise Trilogy::SSLError.new("trilogy_query_recv: SSL Error") }) do
+        @conn.execute("SELECT 1")
+      end
+    end
+  end
+
   test "setting prepared_statements to true raises" do
     assert_raises ArgumentError do
       ActiveRecord::ConnectionAdapters::TrilogyAdapter.new(prepared_statements: true).connect!
