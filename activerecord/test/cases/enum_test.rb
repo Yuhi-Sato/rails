@@ -512,6 +512,17 @@ class EnumTest < ActiveRecord::TestCase
     assert_match(/must be either a non-empty hash or an array\.$/, e.message)
   end
 
+  test "duplicate enum names raise an ArgumentError" do
+    e = assert_raises(ArgumentError) do
+      Class.new(ActiveRecord::Base) do
+        self.table_name = "books"
+        enum :status, [:drafted, :published, :drafted]
+      end
+    end
+
+    assert_match(/must not contain duplicate names\.$/, e.message)
+  end
+
   test "reserved enum names" do
     klass = Class.new(ActiveRecord::Base) do
       self.table_name = "books"
