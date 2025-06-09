@@ -1,3 +1,8 @@
+*   Avoid calling `inspect` on records when building strict loading violation messages.
+    This prevents additional queries triggered by interpolating the record.
+
+    *Codex*
+
 *   Add `affected_rows` to `ActiveRecord::Result`.
 
     *Jenny Shen*

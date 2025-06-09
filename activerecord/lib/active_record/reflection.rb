@@ -342,7 +342,8 @@ module ActiveRecord
       end
 
       def strict_loading_violation_message(owner)
-        message = +"`#{owner}` is marked for strict_loading."
+        klass_name = owner.is_a?(Class) ? owner.name : owner.class.name
+        message = +"`#{klass_name}` is marked for strict_loading."
         message << " The #{polymorphic? ? "polymorphic association" : "#{klass} association"}"
         message << " named `:#{name}` cannot be lazily loaded."
       end
