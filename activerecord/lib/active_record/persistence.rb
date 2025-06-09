@@ -451,6 +451,8 @@ module ActiveRecord
     # and #destroy returns +false+.
     # See ActiveRecord::Callbacks for further details.
     def destroy
+      return self if destroyed?
+
       _raise_readonly_record_error if readonly?
       destroy_associations
       @_trigger_destroy_callback ||= persisted? && destroy_row > 0
