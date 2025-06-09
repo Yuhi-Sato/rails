@@ -9,6 +9,8 @@ require "models/comment"
 require "models/categorization"
 require "models/book"
 require "models/cpk"
+require "models/person"
+require "models/friendship"
 
 module ActiveRecord
   class WhereChainTest < ActiveRecord::TestCase
@@ -200,6 +202,11 @@ module ActiveRecord
       Cpk::Book.create!(id: [1, 2])
 
       assert_predicate Cpk::Book.where.missing(:author), :any?
+    end
+
+    def test_missing_with_self_has_many
+      Person.create!(first_name: "test-first-name")
+      assert_equal 1, Person.where.missing(:friends).count
     end
 
     def test_not_inverts_where_clause

@@ -11,6 +11,7 @@ class Person < ActiveRecord::Base
                                     through: :readers, source: :post
 
   has_many :friendships, foreign_key: "friend_id"
+  has_many :friends, through: :friendships
   # friends_too exists to test a bug, and probably shouldn't be used elsewhere
   has_many :friends_too, foreign_key: "friend_id", class_name: "Friendship"
   has_many :followers, through: :friendships
