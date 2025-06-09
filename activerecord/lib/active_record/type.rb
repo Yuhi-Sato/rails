@@ -40,6 +40,14 @@ module ActiveRecord
 
       def lookup(*args, adapter: current_adapter_name, **kwargs) # :nodoc:
         registry.lookup(*args, adapter: adapter, **kwargs)
+      rescue ArgumentError => e
+        # If we can't find a type and adapter is nil (no connection available),
+        # fall back to the default Value type for basic functionality
+        if adapter.nil? && e.message.match?(/Unknown type/)
+          default_value
+        else
+          raise
+        end
       end
 
       def default_value # :nodoc:
@@ -52,6 +60,9 @@ module ActiveRecord
         env = ConnectionHandling::DEFAULT_ENV.call.to_s
         if (db_config = model.configurations.configs_for(env_name: env).first)
           db_config.adapter.to_sym
+        else
+          # No adapter can be determined, return nil to indicate generic type lookup
+          nil
         end
       end
 

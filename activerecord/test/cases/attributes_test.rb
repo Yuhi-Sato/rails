@@ -357,11 +357,18 @@ module ActiveRecord
     end
 
     test "attributes do not require a connection is established" do
-      assert_not_called(ActiveRecord::Base, :lease_connection) do
-        Class.new(OverloadedType) do
+      original_config = ActiveRecord::Base.remove_connection
+      assert_raises(ActiveRecord::ConnectionNotEstablished) do
+        ActiveRecord::Base.retrieve_connection
+      end
+
+      assert_nothing_raised do
+        Class.new(ActiveRecord::Base) do
           attribute :foo, :string
         end
       end
+    ensure
+      ActiveRecord::Base.establish_connection(original_config) if original_config
     end
 
     test "unknown type error is raised" do
