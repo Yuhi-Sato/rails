@@ -130,9 +130,7 @@ module ActiveRecord
           pool = ConnectionPool.new(pool_config)
           pool.checkout
 
-          # We currently have a bug somewhere which leads for this test case to be deadlocked
-          # and timeout after 30 minutes on the CI. Until that bug is fixed, this test is made
-          # to timeout after a short period of time to reduce the damage.
+          # Ensure the reaper starts correctly in the forked process
           reader, writer = IO.pipe
 
           pid = fork do

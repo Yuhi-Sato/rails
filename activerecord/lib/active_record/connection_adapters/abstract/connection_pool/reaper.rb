@@ -36,6 +36,14 @@ module ActiveRecord
             end
           end
 
+          def after_fork # :nodoc:
+            @mutex.synchronize do
+              @threads.each_value { |t| t.kill if t.alive? }
+              @threads.clear
+              @pools.clear
+            end
+          end
+
           private
             def spawn_thread(frequency)
               Thread.new(frequency) do |t|
@@ -68,11 +76,15 @@ module ActiveRecord
             end
         end
 
-        def run
-          return unless frequency && frequency > 0
-          self.class.register_pool(pool, frequency)
-        end
+      def run
+        return unless frequency && frequency > 0
+        self.class.register_pool(pool, frequency)
+      end
       end
     end
   end
+end
+
+ActiveSupport::ForkTracker.after_fork do
+  ActiveRecord::ConnectionAdapters::ConnectionPool::Reaper.after_fork
 end
