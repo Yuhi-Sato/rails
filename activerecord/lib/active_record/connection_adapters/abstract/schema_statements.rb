@@ -1815,7 +1815,19 @@ module ActiveRecord
 
         def foreign_key_for(from_table, **options)
           return unless use_foreign_keys?
-          foreign_keys(from_table).detect { |fk| fk.defined_for?(**options) }
+
+          keys = foreign_keys(from_table)
+
+          if options[:column]
+            expected = Array(options[:column]).map(&:to_s)
+            keys = keys.select { |fk| Array(fk.column) == expected }
+          elsif options[:to_table]
+            default_column = foreign_key_column_for(options[:to_table], "id")
+            matches = keys.select { |fk| fk.column == default_column }
+            keys = matches if matches.any?
+          end
+
+          keys.find { |fk| fk.defined_for?(**options) }
         end
 
         def foreign_key_for!(from_table, to_table: nil, **options)

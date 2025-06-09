@@ -468,6 +468,19 @@ if ActiveRecord::Base.lease_connection.supports_foreign_keys?
             @connection.foreign_keys("astronauts").map { |fk| [fk.from_table, fk.to_table, fk.column] }
         end
 
+        def test_remove_foreign_key_prefers_default_column
+          @connection.add_column :astronauts, :backup_rocket_id, :bigint
+
+          @connection.add_foreign_key :astronauts, :rockets, column: :rocket_id
+          @connection.add_foreign_key :astronauts, :rockets, column: :backup_rocket_id
+
+          @connection.remove_foreign_key :astronauts, :rockets
+
+          foreign_keys = @connection.foreign_keys(:astronauts)
+          assert_equal 1, foreign_keys.size
+          assert_equal "backup_rocket_id", foreign_keys.first.column
+        end
+
         def test_remove_foreign_key_with_restrict_action
           @connection.add_foreign_key :astronauts, :rockets, on_delete: :restrict
           assert_equal 1, @connection.foreign_keys("astronauts").size
