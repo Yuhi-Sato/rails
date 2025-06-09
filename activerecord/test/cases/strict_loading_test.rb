@@ -39,6 +39,14 @@ class StrictLoadingTest < ActiveRecord::TestCase
     assert_predicate developer, :strict_loading_n_plus_one_only?
   end
 
+  def test_strict_loading_mode_persists_after_toggle
+    developer = Developer.first
+    developer.strict_loading!(mode: :n_plus_one_only)
+    developer.strict_loading!(false)
+    developer.strict_loading!
+    assert_predicate developer, :strict_loading_n_plus_one_only?
+  end
+
   def test_strict_loading_n_plus_one_only_mode_with_has_many
     developer = Developer.first
     firm = Firm.create!(name: "NASA")

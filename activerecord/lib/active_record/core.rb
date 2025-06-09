@@ -721,7 +721,11 @@ module ActiveRecord
         raise ArgumentError, "The :mode option must be one of [:all, :n_plus_one_only] but #{mode.inspect} was provided."
       end
 
-      @strict_loading_mode = mode
+      if value
+        @strict_loading_mode = mode if mode != :all || !defined?(@strict_loading_mode) || @strict_loading_mode.nil?
+      else
+        @strict_loading_mode = mode if mode != :all
+      end
       @strict_loading = value
     end
 
