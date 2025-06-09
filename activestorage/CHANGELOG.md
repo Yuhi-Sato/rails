@@ -1,3 +1,10 @@
+*   Prevent `ActiveStorage.touch_attachment_records = false` from crashing the attachment of a Blob.
+
+    When `ActiveStorage.touch_attachment_records` was set to `false`, attaching an existing Blob to a Record
+    would raise an error. This is now fixed.
+
+    *Edouard Chin*
+
 *   Delegate `ActiveStorage::Filename#to_str` to `#to_s`
 
     Supports checking String equality:
