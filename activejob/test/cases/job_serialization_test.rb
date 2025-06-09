@@ -21,6 +21,14 @@ class JobSerializationTest < ActiveSupport::TestCase
     assert_equal "en", HelloJob.new.serialize["locale"]
   end
 
+  test "serialize uses job locale when set" do
+    job = HelloJob.new
+    job.locale = :de
+    I18n.with_locale(:en) do
+      assert_equal "de", job.serialize["locale"]
+    end
+  end
+
   test "serialize and deserialize are symmetric" do
     # Ensure `enqueued_at` does not change between serializations
     freeze_time
