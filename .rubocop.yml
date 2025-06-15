@@ -4,6 +4,8 @@ plugins:
   - rubocop-performance
   - rubocop-rails
   - rubocop-md
+require:
+  - tools/rubocop/cop/custom/predicate_name_without_side_effect.rb
 
 AllCops:
   # RuboCop has a bunch of cops enabled by default. This setting tells RuboCop
@@ -408,3 +410,9 @@ Markdown:
   WarnInvalid: true
   # Whether to lint codeblocks without code attributes
   Autodetect: false
+
+Naming/PredicateName:
+  Enabled: false
+
+Custom/PredicateNameWithoutSideEffect:
+  Enabled: true
