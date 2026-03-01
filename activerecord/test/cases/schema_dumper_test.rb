@@ -199,6 +199,19 @@ class SchemaDumperTest < ActiveRecord::TestCase
     end
   end
 
+  def test_schema_dumps_partial_indices_with_where_clause_without_parentheses
+    index_definition = dump_table_schema("books").split(/\n/).grep(/t\.index.*isbn/).first.strip
+    if ActiveRecord::Base.lease_connection.supports_partial_index?
+      if current_adapter?(:PostgreSQLAdapter)
+        assert_equal 't.index ["isbn"], name: "index_books_on_isbn", unique: true, where: "(published_on IS NOT NULL)"', index_definition
+      else
+        assert_equal 't.index ["isbn"], name: "index_books_on_isbn", unique: true, where: "published_on IS NOT NULL"', index_definition
+      end
+    else
+      assert_equal 't.index ["isbn"], name: "index_books_on_isbn", unique: true', index_definition
+    end
+  end
+
   def test_schema_dumps_nulls_not_distinct
     index_definition = dump_table_schema("companies").split(/\n/).grep(/t\.index.*company_nulls_not_distinct/).first.strip
     if supports_nulls_not_distinct?
