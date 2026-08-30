@@ -1719,6 +1719,23 @@ For each process, Rails will create one global query executor that uses this man
 should be at least `thread_count + global_executor_concurrency + 1`. For example, if your web server has a maximum of 3 threads,
 and `global_executor_concurrency` is set to 4, then your pool size should be at least 8.
 
+Use `ActiveRecord.with_async_query_concurrency` to apply a smaller concurrency limit to a bounded section of code:
+
+```ruby
+ActiveRecord.with_async_query_concurrency(2) do
+  orders = Order.async_count
+  users = User.active.async_pluck(:id)
+  posts = Post.recent.load_async
+end
+```
+
+The limit applies to asynchronous queries scheduled through all connection pools in the current thread or fiber. Nested blocks use the
+innermost limit, and passing `nil` temporarily removes an enclosing limit. Work above the limit is queued without waiting in the caller,
+but the underlying executor can still use its caller-runs fallback policy when its own queue is full.
+
+This method does not enable asynchronous queries and does not replace the process-wide executor configuration. The connection pools must
+still be large enough for the foreground workload and the configured executor concurrency.
+
 #### `config.active_record.yaml_column_permitted_classes`
 
 Defaults to `[Symbol]`. Allows applications to include additional permitted classes to `safe_load()` on the `ActiveRecord::Coders::YAMLColumn`.

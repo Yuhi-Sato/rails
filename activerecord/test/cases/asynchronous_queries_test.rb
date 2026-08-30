@@ -77,6 +77,23 @@ class AsynchronousQueriesTest < ActiveRecord::TestCase
 
   include AsynchronousQueriesSharedTests
 
+  class QueueingAsyncExecutor
+    attr_reader :jobs
+
+    def initialize
+      @jobs = []
+    end
+
+    def post(&job)
+      @jobs << job
+      true
+    end
+
+    def run_all
+      @jobs.shift.call until @jobs.empty?
+    end
+  end
+
   def setup
     @connection = ActiveRecord::Base.lease_connection
   end
@@ -187,7 +204,56 @@ class AsynchronousQueriesTest < ActiveRecord::TestCase
     end
   end
 
+  def test_scoped_async_query_concurrency_limits_all_async_query_apis
+    skip if in_memory_db?
+
+    with_queueing_async_executor do |executor|
+      count = titles = posts = nil
+      events = capture_notifications("sql.active_record") do
+        ActiveRecord.with_async_query_concurrency(1) do
+          count = Post.async_count
+          titles = Post.limit(2).async_pluck(:title)
+          posts = Post.limit(2).load_async
+
+          assert_equal 1, executor.jobs.size
+        end
+
+        executor.run_all
+
+        assert_equal Post.count, count.value
+        assert_equal Post.limit(2).pluck(:title), titles.value
+        assert_equal Post.limit(2).to_a, posts.to_a
+      end
+
+      async_events = events.select { |event| ["Post Count", "Post Pluck", "Post Load"].include?(event.payload[:name]) }
+      assert_equal [true, true, true], async_events.filter_map { |event| event.payload[:async] }
+    end
+  end
+
+  def test_scoped_async_query_concurrency_preserves_foreground_fallback
+    skip if in_memory_db?
+
+    with_queueing_async_executor do |executor|
+      count = ActiveRecord.with_async_query_concurrency(1) { Post.async_count }
+
+      assert_equal Post.count, count.value
+      assert_equal 1, executor.jobs.size
+
+      executor.run_all
+    end
+  end
+
   private
+    def with_queueing_async_executor
+      pool = @connection.pool
+      original_executor = pool.async_executor
+      executor = QueueingAsyncExecutor.new
+      pool.instance_variable_set(:@async_executor, executor)
+      yield executor
+    ensure
+      pool&.instance_variable_set(:@async_executor, original_executor)
+    end
+
     def with_async_query_failures(failures, matching:, repeat_last: false)
       adapter_class = @connection.class
       original_perform_query = adapter_class.instance_method(:perform_query)

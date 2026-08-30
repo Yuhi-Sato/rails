@@ -886,7 +886,11 @@ module ActiveRecord
       end
 
       def schedule_query(future_result) # :nodoc:
-        @async_executor.post { future_result.execute_or_skip }
+        if limiter = ActiveRecord::AsyncQueryLimiter.current
+          limiter.post(@async_executor) { future_result.execute_or_skip }
+        else
+          @async_executor.post { future_result.execute_or_skip }
+        end
         Thread.pass
       end
 

@@ -1,3 +1,8 @@
+*   Add `ActiveRecord.with_async_query_concurrency` to limit how many asynchronous
+    queries from a bounded section of code run at the same time.
+
+    *Yuhi Sato*
+
 *   Re-enable PostgreSQL triggers when the block given to `disable_referential_integrity` raises.
 
     On PostgreSQL versions without `NOT ENFORCED` constraints (before 18.4), the
