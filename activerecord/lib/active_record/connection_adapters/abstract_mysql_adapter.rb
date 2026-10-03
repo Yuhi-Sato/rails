@@ -67,9 +67,10 @@ module ActiveRecord
             sslcert: "--ssl-cert",
             sslcapath: "--ssl-capath",
             sslcipher: "--ssl-cipher",
-            sslkey: "--ssl-key",
-            ssl_mode: "--ssl-mode"
+            sslkey: "--ssl-key"
           }.filter_map { |opt, arg| "#{arg}=#{mysql_config[opt]}" if mysql_config[opt] }
+
+          args.concat(cli_ssl_mode_args(mysql_config[:ssl_mode], ActiveRecord.database_cli[:mysql]))
 
           if mysql_config[:password] && options[:include_password]
             args << "--password=#{mysql_config[:password]}"
@@ -85,6 +86,47 @@ module ActiveRecord
         def native_database_types # :nodoc:
           NATIVE_DATABASE_TYPES
         end
+
+        # Translates the +ssl_mode+ configuration into command line arguments
+        # for the +mysql+ family of CLI tools.
+        #
+        # MariaDB clients do not understand <tt>--ssl-mode</tt>, so for them
+        # the equivalent MariaDB options are used instead. Modes that cannot
+        # be expressed are rejected rather than silently downgraded.
+        def cli_ssl_mode_args(ssl_mode, commands) # :nodoc:
+          return [] if ssl_mode.nil?
+          return ["--ssl-mode=#{ssl_mode}"] if cli_supports_ssl_mode?(commands)
+
+          case ssl_mode.to_s.upcase.delete_prefix("SSL_MODE_")
+          when "DISABLED" then ["--skip-ssl"]
+          when "PREFERRED" then []
+          when "REQUIRED" then ["--ssl"]
+          when "VERIFY_IDENTITY" then ["--ssl", "--ssl-verify-server-cert"]
+          else
+            raise ArgumentError, "ssl_mode #{ssl_mode.inspect} is not supported by the MariaDB command line client"
+          end
+        end
+
+        private
+          # Defaults to true when the client cannot be inspected, preserving
+          # the previous behavior.
+          def cli_supports_ssl_mode?(commands)
+            commands = Array(commands).flatten
+            @cli_ssl_mode_support ||= {}
+            @cli_ssl_mode_support.fetch(commands) do
+              @cli_ssl_mode_support[commands] = detect_cli_ssl_mode_support(commands)
+            end
+          end
+
+          def detect_cli_ssl_mode_support(commands)
+            commands.each do |command|
+              return IO.popen([command, "--help"], err: File::NULL, &:read).include?("--ssl-mode")
+            rescue SystemCallError
+              next
+            end
+
+            true
+          end
       end
 
       def get_database_version # :nodoc:
