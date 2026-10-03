@@ -63,6 +63,31 @@ module ActiveRecord
         end
       end
 
+      def test_ssl_mode_is_translated_for_mariadb_client
+        {
+          "disabled" => ["--skip-ssl"],
+          "preferred" => [],
+          "required" => ["--ssl"],
+          "verify_identity" => ["--ssl", "--ssl-verify-server-cert"],
+        }.each do |ssl_mode, expected|
+          config = make_db_config(adapter: "trilogy", database: "db", ssl_mode: ssl_mode)
+
+          AbstractMysqlAdapter.stub(:cli_supports_ssl_mode?, false) do
+            assert_find_cmd_and_exec_called_with([%w[mysql mysql5], *expected, "db"]) do
+              TrilogyAdapter.dbconsole(config)
+            end
+          end
+        end
+      end
+
+      def test_unsupported_ssl_mode_for_mariadb_client_raises
+        config = make_db_config(adapter: "trilogy", database: "db", ssl_mode: "verify_ca")
+
+        AbstractMysqlAdapter.stub(:cli_supports_ssl_mode?, false) do
+          assert_raises(ArgumentError) { TrilogyAdapter.dbconsole(config) }
+        end
+      end
+
       private
         def make_db_config(config)
           ActiveRecord::DatabaseConfigurations::HashConfig.new("test", "primary", config)

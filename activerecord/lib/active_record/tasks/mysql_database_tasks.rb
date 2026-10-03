@@ -38,7 +38,7 @@ module ActiveRecord
       end
 
       def structure_dump(filename, extra_flags)
-        args = prepare_command_options
+        args = prepare_command_options("mysqldump")
         args.concat(["--result-file", "#{filename}"])
         args.concat(["--no-data"])
         args.concat(["--routines"])
@@ -57,7 +57,7 @@ module ActiveRecord
       end
 
       def structure_load(filename, extra_flags)
-        args = prepare_command_options
+        args = prepare_command_options("mysql")
         args.concat(["--execute", %{SET FOREIGN_KEY_CHECKS = 0; SOURCE #{filename}; SET FOREIGN_KEY_CHECKS = 1}])
         args.concat(["--database", db_config.database.to_s])
         args.unshift(*extra_flags) if extra_flags
@@ -87,7 +87,7 @@ module ActiveRecord
           end
         end
 
-        def prepare_command_options
+        def prepare_command_options(command)
           args = {
             host:      "--host",
             port:      "--port",
@@ -99,11 +99,10 @@ module ActiveRecord
             sslcert:   "--ssl-cert",
             sslcapath: "--ssl-capath",
             sslcipher: "--ssl-cipher",
-            sslkey:    "--ssl-key",
-            ssl_mode:  "--ssl-mode"
+            sslkey:    "--ssl-key"
           }.filter_map { |opt, arg| "#{arg}=#{configuration_hash[opt]}" if configuration_hash[opt] }
 
-          args
+          args.concat(ActiveRecord::ConnectionAdapters::AbstractMysqlAdapter.cli_ssl_mode_args(configuration_hash[:ssl_mode], command))
         end
 
         def run_cmd(cmd, args, action)
